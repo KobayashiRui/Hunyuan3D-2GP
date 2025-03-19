@@ -17,6 +17,7 @@ import uvicorn
 from PIL import Image
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from hy3dgen.rembg import BackgroundRemover
 from hy3dgen.shapegen import Hunyuan3DDiTFlowMatchingPipeline, FloaterRemover, DegenerateFaceRemover, FaceReducer
@@ -197,12 +198,20 @@ class ModelWorker:
 
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],           # すべてのオリジンを許可
+    allow_credentials=True,
+    allow_methods=["*"],           # すべてのHTTPメソッドを許可
+    allow_headers=["*"],           # すべてのヘッダーを許可
+)
+
 @app.get("/status/ping")
 async def root():
     return {"message": "Hello World"}
 
-@app.get("/generate")
-async def generate(request: Request):
+@app.post("/generate")
+async def generate_sync(request: Request):
     logger.info("Worker generate...")
     params = await request.json()
     uid = uuid.uuid4()
